@@ -10,17 +10,16 @@ app = FastAPI(
     title=settings.app_name,
     description="API for the SmartLedger digital register management system.",
     version="0.1.0",
+    debug=False,
 )
+
+allowed_origins = {settings.frontend_origin.rstrip("/")}
+if settings.environment.strip().lower() != "production":
+    allowed_origins.update({"http://localhost:5173", "http://127.0.0.1:5173"})
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(
-        {
-            settings.frontend_origin,
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-        }
-    ),
+    allow_origins=sorted(allowed_origins),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

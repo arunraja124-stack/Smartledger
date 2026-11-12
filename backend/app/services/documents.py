@@ -7,6 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import cv2
+import numpy as np
 import pandas as pd
 import pytesseract
 from fastapi import HTTPException, UploadFile
@@ -17,6 +18,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.services.document_storage import (
+    DocumentStorageError,
+    delete_document,
+    read_document,
+    store_document,
+)
 from app.models import (
     Attendance,
     CustomerEnquiry,
@@ -60,17 +67,27 @@ def save_upload(upload: UploadFile, register_type: str, db: Session) -> Document
     settings = get_settings()
     if len(content) > settings.max_upload_size_bytes:
         raise HTTPException(status_code=413, detail="Uploaded file exceeds the configured size limit")
-    upload_dir = _upload_dir()
-    upload_dir.mkdir(parents=True, exist_ok=True)
     stored_name = f"{__import__('uuid').uuid4().hex}{extension}"
-    (upload_dir / stored_name).write_bytes(content)
+    local_path = _upload_dir() / stored_name
+    try:
+        store_document(stored_name, content, local_path, upload.content_type or "application/octet-stream")
+    except DocumentStorageError as error:
+        raise HTTPException(status_code=503, detail="Configured document storage is unavailable") from error
     document = DocumentUpload(
         original_filename=upload.filename or stored_name,
         stored_filename=stored_name,
         register_type=register_type,
     )
     db.add(document)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        try:
+            delete_document(stored_name, local_path)
+        except DocumentStorageError:
+            pass
+        raise
     db.refresh(document)
     return document
 
@@ -118,8 +135,13 @@ def retry_process_upload(document: DocumentUpload, db: Session) -> DocumentUploa
 def _run_ocr(document: DocumentUpload) -> list[dict]:
     settings = get_settings()
     pytesseract.pytesseract.tesseract_cmd = settings.tesseract_cmd
-    path = _upload_dir() / document.stored_filename
-    image = cv2.imread(str(path))
+    try:
+        image_bytes = read_document(document.stored_filename, _upload_dir() / document.stored_filename)
+    except DocumentStorageError as error:
+        document.status = "Failed"
+        document.processing_error = "Uploaded image is unavailable from the configured storage"
+        raise HTTPException(status_code=503, detail=document.processing_error) from error
+    image = cv2.imdecode(np.frombuffer(image_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
     if image is None:
         document.status = "Failed"
         document.processing_error = "Uploaded image could not be decoded"

@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: smartledger-api
+    runtime: docker
+    plan: free
+    branch: main
+    rootDir: backend
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: DATABASE_POOL_SIZE
+        value: "2"
+      - key: DATABASE_MAX_OVERFLOW
+        value: "2"
+      - key: DOCUMENT_STORAGE_BACKEND
+        value: s3
+      - key: OBJECT_STORAGE_ENDPOINT_URL
+        sync: false
+      - key: OBJECT_STORAGE_BUCKET
+        sync: false
+      - key: OBJECT_STORAGE_ACCESS_KEY
+        sync: false
+      - key: OBJECT_STORAGE_SECRET_KEY
+        sync: false
+      - key: OBJECT_STORAGE_REGION
+        value: auto
+      - key: TESSERACT_CMD
+        value: /usr/bin/tesseract
+      - key: UPLOAD_DIR
+        value: /tmp/smartledger-uploads

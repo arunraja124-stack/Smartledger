@@ -1,4 +1,5 @@
 from logging.config import fileConfig
+import ssl
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -31,10 +32,14 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    connect_args = {}
+    if settings.database_ssl_ca:
+        connect_args["ssl"] = ssl.create_default_context(cafile=settings.database_ssl_ca)
     connectable = engine_from_config(
         {"sqlalchemy.url": settings.database_url},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)

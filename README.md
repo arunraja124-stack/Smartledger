@@ -129,3 +129,23 @@ pretending extraction succeeded.
 - Tesseract OCR, with `tesseract.exe` available to the PowerShell session
 - Python 3.11+
 - Node.js 20+
+
+## Deployment preparation
+
+Deployment configuration and the current readiness audit are documented in
+[`docs/deployment-readiness.md`](docs/deployment-readiness.md). The backend can
+be built with `backend/Dockerfile`; `render.yaml` is configured for a Render
+Free preview service with automatic deploys disabled. The frontend has Vercel
+SPA route fallback configured in `frontend/vercel.json`.
+
+Production startup requires a private random `JWT_SECRET_KEY`, a remote
+TLS-verified `DATABASE_URL`, an HTTPS `FRONTEND_ORIGIN`, and private S3-compatible
+object storage settings. Keep these values in the hosting provider's secret
+environment settings, never in Git. Render Free filesystems are ephemeral, so
+the local upload directory is not suitable for persistent production uploads.
+
+The included `backend/scripts/copy_existing_uploads_to_s3.py` can copy all local
+OCR images to an approved private S3-compatible bucket and verify their
+contents. It does not modify database records or delete local files. Do not run
+it until the destination account, costs, and transfer of existing documents
+are approved.
