@@ -1,0 +1,43 @@
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+**/.pytest_cache/
+
+# Local environment files. Keep only safe templates in version control.
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+
+# Dependencies, build output, caches, and local logs.
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+**/.vite/
+coverage/
+htmlcov/
+*.log
+
+# Local uploads and database/credential artifacts.
+backend/uploads/*
+!backend/uploads/.gitkeep
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+*.pem
+*.key
+*.p12
+*.pfx
+
+.vscode/
