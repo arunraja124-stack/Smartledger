@@ -5,7 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     ENVIRONMENT=production \
     TESSERACT_CMD=/usr/bin/tesseract \
-    DATABASE_SSL_CA=/etc/ssl/certs/ca-certificates.crt \
+    DATABASE_SSL_CA=/app/certs/tidb-ca.pem \
     DOCUMENT_STORAGE_BACKEND=s3 \
     OBJECT_STORAGE_REGION=auto \
     UPLOAD_DIR=/tmp/smartledger-uploads
@@ -25,10 +25,12 @@ COPY requirements.txt ./requirements.txt
 RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements.txt
 
+
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./alembic.ini
 COPY scripts ./scripts
+COPY certs ./certs
 
 RUN groupadd --system smartledger \
     && useradd --system --gid smartledger --home-dir /app --shell /usr/sbin/nologin smartledger \

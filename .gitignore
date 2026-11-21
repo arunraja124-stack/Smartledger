@@ -41,3 +41,4 @@ backend/uploads/*
 *.pfx
 
 .vscode/
+!backend/certs/tidb-ca.pem
